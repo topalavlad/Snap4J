@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
+import java.util.EnumSet;
 
 /**
  * @author vlad.topala
@@ -11,12 +12,17 @@ import java.awt.event.MouseEvent;
  *         all drag events on JFrames.
  */
 public class Snap4JListener {
-    ScreenEdgeSnapper snapper = new ScreenEdgeSnapper();
-    StateGenerator stateGenerator = new StateGenerator();
-    private OverlayGenerator overlayGenerator = new OverlayGenerator();
+    private final ScreenEdgeSnapper snapper = new ScreenEdgeSnapper();
+    private final StateGenerator stateGenerator;
+    private final OverlayGenerator overlayGenerator = new OverlayGenerator();
     private boolean dragged = false;
 
     public Snap4JListener() {
+        this(EnumSet.allOf(NextWindowState.class));
+    }
+
+    public Snap4JListener(EnumSet<NextWindowState> states) {
+        stateGenerator = new StateGenerator(states);
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
             @Override
             public void eventDispatched(AWTEvent event) {
@@ -49,6 +55,18 @@ public class Snap4JListener {
                 }
             }
         }, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
+    }
+
+    /**
+     * This method is useful for when a frame is opened directly maximized but the application
+     * using this library previously saved some normal state bounds
+     *
+     * @param frame  - the frame for which we'll set the bounds
+     * @param bounds - the bounds
+     */
+    @SuppressWarnings("unused")
+    public void setLastBounds(JFrame frame, Rectangle bounds) {
+        stateGenerator.setLastBounds(frame, bounds);
     }
 
     private boolean shouldReSnap(State nextState, JFrame source) {
