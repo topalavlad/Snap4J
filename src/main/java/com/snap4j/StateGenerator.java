@@ -21,11 +21,10 @@ public class StateGenerator {
         this.states = states;
     }
 
-    public State getNextState(JFrame source, Point mousePosition) {
-        return getNextState(source, mousePosition, false);
-    }
-
-    public State getNextState(JFrame source, Point mousePosition, boolean readOnly) {
+    public State getNextState(JFrame source, Point mousePosition, boolean readOnly, Point pressedPoint) {
+        State nextState = State.DUMMY_STATE;
+        int mouseX = mousePosition.x;
+        int mouseY = mousePosition.y;
 
         if (!readOnly && source.getExtendedState() != Frame.MAXIMIZED_BOTH && source.getExtendedState() != Frame.MAXIMIZED_VERT) {
             saveBounds(source);
@@ -33,19 +32,23 @@ public class StateGenerator {
         if (!lastBounds.containsKey(source)) {
             lastBounds.put(source, State.DUMMY_STATE.getBounds());
         }
-        State nextState = State.DUMMY_STATE;
         for (NextWindowState windowState : states) {
-            nextState = windowState.getNextState(mousePosition.x, mousePosition.y, SNAP_DISTANCE);
+            nextState = windowState.getNextState(mouseX, mouseY, SNAP_DISTANCE);
             if (!nextState.equals(State.DUMMY_STATE)) {
                 break;
             }
         }
         if (nextState.getFrameState() == Frame.NORMAL) {
             Rectangle lastBoundsForSource = lastBounds.get(source);
-            nextState = new State(Frame.NORMAL, new Rectangle(mousePosition.x, mousePosition.y,
+            nextState = new State(Frame.NORMAL, new Rectangle(mouseX - getXRelativeToMouse(source.getWidth(),
+                    lastBoundsForSource.getWidth(), pressedPoint), mouseY - pressedPoint.y,
                     lastBoundsForSource.width, lastBoundsForSource.height));
         }
         return nextState;
+    }
+
+    private int getXRelativeToMouse(double currentWidth, double normalWidth, Point pressedPoint) {
+        return (int) ((normalWidth / currentWidth) * pressedPoint.getX());
     }
 
     private void saveBounds(JFrame source) {

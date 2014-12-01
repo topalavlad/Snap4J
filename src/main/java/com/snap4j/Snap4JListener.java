@@ -12,6 +12,8 @@ import java.util.EnumSet;
  *         all drag events on JFrames.
  */
 public class Snap4JListener {
+
+    private static final Point ORIGIN = new Point(0, 0);
     private final ScreenEdgeSnapper snapper = new ScreenEdgeSnapper();
     private final StateGenerator stateGenerator;
     private final OverlayGenerator overlayGenerator = new OverlayGenerator();
@@ -31,8 +33,11 @@ public class Snap4JListener {
                     Point location = MouseInfo.getPointerInfo().getLocation();
                     State nextState;
                     switch (event.getID()) {
+                        case MouseEvent.MOUSE_PRESSED:
+                            pressedPoint = ((MouseEvent) event).getPoint();
+                            break;
                         case MouseEvent.MOUSE_DRAGGED:
-                            nextState = stateGenerator.getNextState(source, location, true);
+                            nextState = stateGenerator.getNextState(source, location, true, pressedPoint);
                             if (shouldReSnap(nextState, source)) {
                                 overlayGenerator.generate(nextState);
                                 dragged = true;
@@ -41,19 +46,20 @@ public class Snap4JListener {
                             }
                             break;
                         case MouseEvent.MOUSE_RELEASED:
-                            if (!dragged) {
-                                break;
+                            if (dragged) {
+                                overlayGenerator.clear();
+                                nextState = stateGenerator.getNextState(source, location, false, pressedPoint);
+                                if (shouldReSnap(nextState, source)) {
+                                    snapper.setState(source, nextState);
+                                    dragged = false;
+                                }
                             }
-                            overlayGenerator.clear();
-                            nextState = stateGenerator.getNextState(source, location);
-                            if (shouldReSnap(nextState, source)) {
-                                snapper.setState(source, nextState);
-                                dragged = false;
-                            }
+                            pressedPoint = ORIGIN;
                             break;
                     }
                 }
             }
+            private Point pressedPoint = ORIGIN;
         }, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
     }
 
