@@ -59,6 +59,7 @@ public class Snap4JListener {
                     }
                 }
             }
+
             private Point pressedPoint = ORIGIN;
         }, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
     }
